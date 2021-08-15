@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"golang.org/x/crypto/ssh"
-	"io"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -14,7 +13,7 @@ import (
 
 var (
 	SSHTimeout = 	5
-	SSHPort    = 	22
+	SSHPort    = 	"22"
 )
 
 var (
@@ -47,10 +46,13 @@ func SendSSH(wg *sync.WaitGroup, host string, user string, pw string, cmd string
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 
+
+
 	t := time.Now()
-	s, err := ssh.Dial("tcp", host+":"+string(SSHPort), config)
+	s, err := ssh.Dial("tcp", host+":"+SSHPort, config)
 	if err != nil {
 		fmt.Printf("[-] Failed to connect to %s\n", host)
+		wg.Done()
 		Errors++
 		return
 	}
@@ -62,22 +64,12 @@ func SendSSH(wg *sync.WaitGroup, host string, user string, pw string, cmd string
 	}
 	defer session.Close()
 
-	StdOut, err := session.StdoutPipe()
-	if err != nil {
-		fmt.Println(err)
-	}
-	go io.Copy(os.Stdout, StdOut)
-	SessStr, err := session.StderrPipe()
-	if err != nil {
-		fmt.Println(err)
-	}
-	go io.Copy(os.Stderr, SessStr)
-
 	err = session.Run(cmd)
 	if err != nil {
 		fmt.Println(err)
 	}
 	Success++
+	wg.Done()
 	fmt.Printf("[+] Command sent to %s within %s\n", host, time.Since(t))
 }
 
@@ -114,8 +106,10 @@ func main() {
 	Start := time.Now()
 
 	for _, x := range Servers {
+		if x == "" {continue}
 		x = strings.TrimSpace(x)
 		Args := strings.Split(x, ":")
+		if len(Args) < 2 {continue}
 		wg.Add(1)
 		go SendSSH(&wg, Args[0], Args[1], Args[2], cmd)
 	}
