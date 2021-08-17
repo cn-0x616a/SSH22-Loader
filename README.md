@@ -10,7 +10,7 @@ SSHLoader written in golang and made for raw speed. Can be used as command execu
 
 
 ```go
-var (
+const (
 	SSHTimeout = 	5 // Timeout from SSH connection in seconds.
 	SSHPort    = 	22 // SSH Port
 )
