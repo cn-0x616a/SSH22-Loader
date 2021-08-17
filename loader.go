@@ -11,7 +11,7 @@ import (
 )
 
 
-var (
+const (
 	SSHTimeout = 	5
 	SSHPort    = 	"22"
 )
